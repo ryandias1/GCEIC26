@@ -1,5 +1,5 @@
-    console.log("Iniciando...");
-    console.log("Deu certo");
+console.log("Iniciando...");
+console.log("Deu certo");
 
 const express = require('express');
 const session = require('express-session');
@@ -75,6 +75,53 @@ app.post('/calcular', requireAuth, async (req, res) => {
     console.log(err.message)
     res.status(400).json({ success: false, error: err.message});  
   }
+});
+
+//Rotas Calculadora Financeira (grupo 10)
+
+function requireCalcFinanceiraAuth(req, res, next) {
+  if (req.session && req.session.calcFinanceiraUser) return next();
+  res.redirect('/calcFinanceira/login');
+}
+
+app.get('/calcFinanceira', (req, res) => {
+  res.render('calcFinanceira/splash');
+});
+
+app.get('/calcFinanceira/login', (req, res) => {
+  if (req.session.user) return res.redirect('/calcFinanceira/calculo');
+  res.render('calcFinanceira/login', { erro: null }); 
+});
+
+app.post('/calcFinanceira/login', (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password)
+    return res.render('calcFinanceira/login', { error: 'Preencha todos os campos' });
+
+  if (username === 'admin' && password === '1234') {
+    req.session.calcFinanceiraUser = { username: 'adm', nome: 'Administrador' };
+    return res.redirect('/calcFinanceira/calculo');
+  }
+
+  res.render('calcFinanceira/login', { error: 'Usuário ou senha inválidos' });
+});
+
+app.get('/calcFinanceira/logout', (req, res) => {
+  req.session.user = null;
+  res.redirect('/calcFinanceira/login');
+});
+
+app.get('/calcFinanceira/calculo', requireCalcFinanceiraAuth, (req, res) => {
+  res.render('calcFinanceira/calculadora', { user: req.session.calcFinanceiraUser || null, resultado: null });
+});
+
+app.get('/calcFinanceira/sobre', requireCalcFinanceiraAuth, (req, res) => {
+  res.render('calcFinanceira/sobre');
+});
+
+app.get('/calcFinanceira/help', requireCalcFinanceiraAuth, (req, res) => {
+  res.render('calcFinanceira/help');
 });
 
 app.listen(PORT, () => {
